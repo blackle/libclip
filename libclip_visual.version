@@ -1,0 +1,4 @@
+CLIP_VISUAL {
+  global: clip_encode_image;
+  local: *;
+};
