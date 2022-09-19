@@ -18,6 +18,14 @@ int clip_encode_image(const float* input, size_t input_size, float* output, size
     SET_ERROR(error, "output dimensions incorrect");
     return -1;
   }
+  if (input == NULL) {
+    SET_ERROR(error, "input is null");
+    return -1;
+  }
+  if (output == NULL) {
+    SET_ERROR(error, "output is null");
+    return -1;
+  }
 
   int64_t rank = 4;
   int64_t shape[] = {1, CLIP_INPUT_CHANNELS, CLIP_INPUT_WIDTH, CLIP_INPUT_HEIGHT};
