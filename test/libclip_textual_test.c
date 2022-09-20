@@ -12,9 +12,12 @@ int main() {
 		return -1;
 	}
 
-	// for (int i = 0; i < CLIP_TEXTUAL_OUTPUT_DIM; i++) {
-	// 	printf("%f\n", output[i]);
-	// }
+	for (int i = 0; i < CLIP_TEXTUAL_OUTPUT_DIM / 4; i++) {
+		for (int j = 0; j < 4; j++) {
+			printf("%f\t", output[i*4 + j]);
+		}
+		printf("\n");
+	}
 
 	return 0;
 }
