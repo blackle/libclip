@@ -1,0 +1,5 @@
+*.o
+*.so
+*.onnx
+*.inc
+__pycache__
