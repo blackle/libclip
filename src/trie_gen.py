@@ -1,4 +1,5 @@
-import html
+#!/usr/bin/env python3
+
 import os
 from functools import lru_cache
 

@@ -2,7 +2,7 @@
 #include "libclip_textual.h"
 #include "OnnxMlirRuntime.h"
 #include "trie.h"
-#include "trie_data.h"
+#include "trie_data.inc"
 #include <ctype.h>
 
 #define PCRE2_CODE_UNIT_WIDTH 8

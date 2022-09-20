@@ -4,17 +4,20 @@
 
 all : libclip_visual.so libclip_textual.so
 
-visual.onnx :
-	wget https://clip-as-service.s3.us-east-2.amazonaws.com/models/onnx/ViT-B-32/visual.onnx
+src/visual.onnx :
+	wget -P src https://clip-as-service.s3.us-east-2.amazonaws.com/models/onnx/ViT-B-32/visual.onnx
 
-textual.onnx :
-	wget https://clip-as-service.s3.us-east-2.amazonaws.com/models/onnx/ViT-B-32/textual.onnx
+src/textual.onnx :
+	wget -P src https://clip-as-service.s3.us-east-2.amazonaws.com/models/onnx/ViT-B-32/textual.onnx
 
-%.o : %.onnx
+src/%.o : src/%.onnx
 	$(ONNX_MLIR_EXE) --EmitObj -O3 --parallel $^
 
-libclip_visual.so : libclip_visual.c libclip_visual.h libclip_visual.version visual.o
-	gcc -fPIC -shared -o $@ libclip_visual.c visual.o -I $(ONNX_MLIR_INCLUDE) -lm -L $(ONNX_MLIR_LIB) -l:libcruntime.a -Wl,--version-script=libclip_visual.version
+src/trie_data.inc : src/trie_gen.py
+	src/trie_gen.py > src/trie_data.inc
 
-libclip_textual.so : libclip_textual.c libclip_textual.h trie.c trie.h libclip_textual.version textual.o
-	gcc -fPIC -shared -o $@ libclip_textual.c trie.c textual.o -I $(ONNX_MLIR_INCLUDE) -lm -L $(ONNX_MLIR_LIB) -l:libcruntime.a -l:libpcre2-8.a -Wl,--version-script=libclip_textual.version
+libclip_visual.so : src/libclip_visual.c include/libclip_visual.h src/libclip_visual.version src/visual.o
+	gcc -fPIC -shared -o $@ src/libclip_visual.c src/visual.o -I include -I src -I $(ONNX_MLIR_INCLUDE) -lm -L $(ONNX_MLIR_LIB) -l:libcruntime.a -Wl,--version-script=src/libclip_visual.version
+
+libclip_textual.so : src/libclip_textual.c include/libclip_textual.h src/trie.c src/trie.h src/trie_data.inc src/libclip_textual.version src/textual.o
+	gcc -fPIC -shared -o $@ src/libclip_textual.c src/trie.c src/textual.o -I include -I src -I $(ONNX_MLIR_INCLUDE) -lm -L $(ONNX_MLIR_LIB) -l:libcruntime.a -l:libpcre2-8.a -Wl,--version-script=src/libclip_textual.version
