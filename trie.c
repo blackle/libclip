@@ -66,7 +66,7 @@ int read_header(BitReader* b) {
 	return head;
 }
 
-int find(const uint8_t* trie, const uint8_t* charmap, const uint8_t* key, size_t key_len) {
+int trie_find(const uint8_t* trie, const uint8_t* charmap, const uint8_t* key, size_t key_len) {
 	BitReader b = {.offset = trie, .bit = 0};
 	int head = read_header(&b);
 	bool hasprefix = (head == 0) || (head == 2);
@@ -117,5 +117,5 @@ int find(const uint8_t* trie, const uint8_t* charmap, const uint8_t* key, size_t
 	key_len -= 1;
 
 	const uint8_t* end = end_of_bits(&b);
-	return find(end + myoffset, charmap, key, key_len);
+	return trie_find(end + myoffset, charmap, key, key_len);
 }

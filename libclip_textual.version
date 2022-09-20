@@ -1,0 +1,4 @@
+CLIP_TEXTUAL {
+  global: clip_encode_text;
+  local: *;
+};
