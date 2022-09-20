@@ -40,10 +40,10 @@ if (result != 0) {
 
 ## todo
 
-[ ] create a better testing application
-[ ] create static library version (I think this requires renaming the symbols coming out of onnx-mlir)
-[ ] utf8 lowercase in tokenizer
-[ ] improve performance of tokenizer
-[ ] better error handling in tokenizer
-[ ] reduce number of mallocs (there's one in trie.c which might not need to be there)
-[ ] experiment with statically linking the onnx runtime, instead of onnx-mlir. should improve performance, maybe without adding any runtime dependencies
+- [ ] create a better testing application
+- [ ] create static library version (I think this requires renaming the symbols coming out of onnx-mlir)
+- [ ] utf8 lowercase in tokenizer
+- [ ] improve performance of tokenizer
+- [ ] better error handling in tokenizer
+- [ ] reduce number of mallocs (there's one in trie.c which might not need to be there)
+- [ ] experiment with statically linking the onnx runtime, instead of onnx-mlir. should improve performance, maybe without adding any runtime dependencies
