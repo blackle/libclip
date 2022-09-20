@@ -4,6 +4,11 @@
 
 all : libclip_visual.so libclip_textual.so clip_test
 
+release : libclip.zip
+
+libclip.zip : libclip_visual.so libclip_textual.so include/libclip_visual.h include/libclip_textual.h Readme.md
+	zip $@ $^
+
 src/visual.onnx :
 	wget -P src https://clip-as-service.s3.us-east-2.amazonaws.com/models/onnx/ViT-B-32/visual.onnx
 
