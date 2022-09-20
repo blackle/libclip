@@ -5,7 +5,8 @@ int main() {
 	float output[CLIP_TEXTUAL_OUTPUT_DIM];
 
 	const char* error;
-	int val = clip_encode_text("a yellow smiley face on a white background", true, output, CLIP_TEXTUAL_OUTPUT_DIM, &error);
+	int val = clip_encode_text("☺👖", true, output, CLIP_TEXTUAL_OUTPUT_DIM, &error);
+
 	if (val != 0) {
 		printf("error: %s\n", error);
 		return -1;

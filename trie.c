@@ -72,13 +72,16 @@ int trie_find(const uint8_t* trie, const uint8_t* charmap, const uint8_t* key, s
 	bool hasprefix = (head == 0) || (head == 2);
 	bool hasvalue = (head == 0) || (head == 1);
 	if (hasprefix) {
+		//todo: can we do this without a malloc?
 		size_t prefix_len = 0;
 		uint8_t* prefix = read_pstring(&b, charmap, &prefix_len);
 
 		if (key_len < prefix_len) {
+			free(prefix);
 			return -1;
 		}
 		if (memcmp(key, prefix, prefix_len) != 0) {
+			free(prefix);
 			return -1;
 		}
 		key += prefix_len;
