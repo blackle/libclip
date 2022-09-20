@@ -38,17 +38,6 @@ int clip_encode_text(const char* text, bool truncate, float* output, size_t outp
     SET_ERROR(error, "tokenization too long");
     return -1;	
   }
-  //"a yellow smiley face on a white background"
- //  context[0] = START_OF_TEXT;
- //  context[1] = 320;
- //  context[2] = 4481;
- //  context[3] = 22925;
- //  context[4] = 1710;
- //  context[5] = 525;
- //  context[6] = 320;
- //  context[7] = 1579;
-	// context[8] = 5994;
- //  context[9] = END_OF_TEXT;
 
   OMTensor *tensor = omTensorCreate(context, shape, rank, ONNX_TYPE_INT64);
   OMTensorList *tensorListIn = omTensorListCreate(&tensor, 1);

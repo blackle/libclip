@@ -17,7 +17,7 @@ src/trie_data.inc : src/trie_gen.py
 	src/trie_gen.py > src/trie_data.inc
 
 libclip_visual.so : src/libclip_visual.c include/libclip_visual.h src/libclip_visual.version src/visual.o
-	gcc -fPIC -shared -o $@ src/libclip_visual.c src/visual.o -I include -I src -I $(ONNX_MLIR_INCLUDE) -lm -L $(ONNX_MLIR_LIB) -l:libcruntime.a -Wl,--version-script=src/libclip_visual.version
+	gcc -fPIC -shared -o $@ src/libclip_visual.c src/visual.o -I include -I src -I $(ONNX_MLIR_INCLUDE) -lm -L $(ONNX_MLIR_LIB) -l:libcruntime.a -Wl,--version-script=src/libclip_visual.version -g
 
 libclip_textual.so : src/libclip_textual.c include/libclip_textual.h src/trie.c src/trie.h src/tokenizer.c src/tokenizer.h src/trie_data.inc src/libclip_textual.version src/textual.o
-	gcc -fPIC -shared -o $@ src/libclip_textual.c src/trie.c src/tokenizer.c src/textual.o -I include -I src -I $(ONNX_MLIR_INCLUDE) -lm -L $(ONNX_MLIR_LIB) -l:libcruntime.a -l:libpcre2-8.a -Wl,--version-script=src/libclip_textual.version
+	gcc -fPIC -shared -o $@ src/libclip_textual.c src/trie.c src/tokenizer.c src/textual.o -I include -I src -I $(ONNX_MLIR_INCLUDE) -lm -L $(ONNX_MLIR_LIB) -l:libcruntime.a -l:libpcre2-8.a -Wl,--version-script=src/libclip_textual.version -g

@@ -81,7 +81,8 @@ int tokenize_word(const char* word, int word_size, TokenList* list) {
 	memcpy(word_null, word, word_size);
 
 	int val = find_vocab(word_null, word_size + 1);
-	if (val != -1 && token_list_add(list, val) == -1) {
+	if (val != -1) {
+		token_list_add(list, val);
 		return 0;
 	}
 

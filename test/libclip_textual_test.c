@@ -5,7 +5,7 @@ int main() {
 	float output[CLIP_TEXTUAL_OUTPUT_DIM];
 
 	const char* error;
-	int val = clip_encode_text("☺👖", true, output, CLIP_TEXTUAL_OUTPUT_DIM, &error);
+	int val = clip_encode_text("a pixelated red number one on a black background", true, output, CLIP_TEXTUAL_OUTPUT_DIM, &error);
 
 	if (val != 0) {
 		printf("error: %s\n", error);
