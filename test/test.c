@@ -4,12 +4,31 @@
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
+#include <pthread.h>
 
 // neural network eye exam. pair 9 images with 9 descriptions
 #define NUM_PROPS 3
 #define NUM_DESCS (NUM_PROPS*NUM_PROPS)
 
-static const char one[7*7] = 
+static const char A[7*7] = 
+	"......."
+	".#####."
+	".#####."
+	".#####."
+	".#####."
+	".#####."
+	".......";
+
+static const char B[7*7] = 
+	"#.....#"
+	".#...#."
+	"..#.#.."
+	"...#..."
+	"..#.#.."
+	".#...#."
+	"#.....#";
+
+static const char C[7*7] = 
 	"......."
 	"...#..."
 	"..##..."
@@ -18,67 +37,61 @@ static const char one[7*7] =
 	"..###.."
 	".......";
 
-static const char cross[7*7] = 
-	"......."
-	".#...#."
-	"..#.#.."
-	"...#..."
-	"..#.#.."
-	".#...#."
-	".......";
+static const char* bitmaps[3] = {A, B, C};
 
-static const char arrow[7*7] = 
-	"......."
-	".####.."
-	".##...."
-	".#.#..."
-	".#..#.."
-	".....#."
-	".......";
-
-static const char* bitmaps[3] = {one, cross, arrow};
+typedef struct {
+	float* output;
+	int bitmap;
+	int color;
+} ThreadTask;
 
 // encode a generated image based on the above bitmaps, and a color
-void encode_image(float* output, int bitmap, int color) {
-	const char* bmp = bitmaps[bitmap];
+void* encode_image(void* user_data) {
+	ThreadTask* task = (ThreadTask*)user_data;
+	const char* bmp = bitmaps[task->bitmap];
 	float image[CLIP_VISUAL_INPUT_DIM] = {};
-	float* in = image + color * CLIP_VISUAL_INPUT_WIDTH * CLIP_VISUAL_INPUT_HEIGHT;
+	float* in = image + task->color * CLIP_VISUAL_INPUT_WIDTH * CLIP_VISUAL_INPUT_HEIGHT;
 	for (int x = 0; x < CLIP_VISUAL_INPUT_WIDTH; x++) {
 		for (int y = 0; y < CLIP_VISUAL_INPUT_HEIGHT; y++) {
 			int bx = x / (CLIP_VISUAL_INPUT_WIDTH / 7);
-			int by = y / (CLIP_VISUAL_INPUT_WIDTH / 7);
-			if (bmp[x * 7 + y] == '#') {
+			int by = y / (CLIP_VISUAL_INPUT_HEIGHT / 7);
+			if (bmp[by * 7 + bx] == '#') {
 				in[x * CLIP_VISUAL_INPUT_HEIGHT + y] = 1.0f;
+			} else {
+				in[x * CLIP_VISUAL_INPUT_HEIGHT + y] = 0.0f;
 			}
 		}
 	}
-	clip_encode_image(image, CLIP_VISUAL_INPUT_DIM, output, CLIP_VISUAL_OUTPUT_DIM, NULL);
+	clip_encode_image(image, CLIP_VISUAL_INPUT_DIM, task->output, CLIP_VISUAL_OUTPUT_DIM, NULL);
+	return NULL;
 }
 
 // encode text based on a generated description
-void encode_text(float* output, int bitmap, int color) {
+void* encode_text(void* user_data) {
+	ThreadTask* task = (ThreadTask*)user_data;
 	char* out = NULL; size_t size;
 	FILE* str = open_memstream(&out, &size);
 	fprintf(str, "a pixelated ");
-	switch (color) {
+	switch (task->color) {
 		case 0: fprintf(str, "red"); break;
 		case 1: fprintf(str, "green"); break;
 		case 2: fprintf(str, "blue"); break;
 		default:fprintf(str, "UNK"); break;
 	}
 	fprintf(str, " ");
-	switch (bitmap) {
-		case 0: fprintf(str, "numeric number one"); break;
-		case 1: fprintf(str, "cross-shaped letter x"); break;
-		case 2: fprintf(str, "arrow pointing to the top left"); break;
+	switch (task->bitmap) {
+		case 0: fprintf(str, "square"); break;
+		case 1: fprintf(str, "x"); break;
+		case 2: fprintf(str, "number one"); break;
 		default:fprintf(str, "UNK"); break;
 	}
 	fprintf(str, " on a black background");
 	fclose(str);
 	printf("%s\n", out);
-	clip_encode_text(out, true, output, CLIP_TEXTUAL_OUTPUT_DIM, NULL);
+	clip_encode_text(out, true, task->output, CLIP_TEXTUAL_OUTPUT_DIM, NULL);
 
 	free(out);
+	return NULL;
 }
 
 float magnitude(float* a) {
@@ -108,12 +121,31 @@ int main() {
 	memset(text_embeddings, 0, sizeof(float) * CLIP_VISUAL_OUTPUT_DIM * NUM_DESCS);
 
 
+	pthread_t img_threads[NUM_DESCS];
+	ThreadTask img_tasks[NUM_DESCS];
 	for (int i = 0; i < NUM_DESCS; i++) {
-		encode_image(image_embeddings + CLIP_VISUAL_OUTPUT_DIM*i, i / NUM_PROPS, i % NUM_PROPS);
+		img_tasks[i].output = image_embeddings + CLIP_VISUAL_OUTPUT_DIM*i;
+		img_tasks[i].bitmap = i / NUM_PROPS;
+		img_tasks[i].color = i % NUM_PROPS;
+
+		pthread_create(&img_threads[i], NULL, &encode_image, (void*)&img_tasks[i]);
 	}
 
 	for (int i = 0; i < NUM_DESCS; i++) {
-		encode_text(text_embeddings + CLIP_VISUAL_OUTPUT_DIM*i, i / NUM_PROPS, i % NUM_PROPS);
+		pthread_join(img_threads[i], NULL);
+	}
+
+	pthread_t txt_threads[NUM_DESCS];
+	ThreadTask txt_tasks[NUM_DESCS];
+	for (int i = 0; i < NUM_DESCS; i++) {
+		txt_tasks[i].output = text_embeddings + CLIP_VISUAL_OUTPUT_DIM*i;
+		txt_tasks[i].bitmap = i / NUM_PROPS;
+		txt_tasks[i].color = i % NUM_PROPS;
+		pthread_create(&txt_threads[i], NULL, &encode_text, (void*)&txt_tasks[i]);
+	}
+
+	for (int i = 0; i < NUM_DESCS; i++) {
+		pthread_join(txt_threads[i], NULL);
 	}
 
 	float confusion[NUM_DESCS][NUM_DESCS];
@@ -124,14 +156,15 @@ int main() {
 			float* image = image_embeddings + CLIP_VISUAL_OUTPUT_DIM*i;
 			float* text = text_embeddings + CLIP_VISUAL_OUTPUT_DIM*j;
 			float sim = cosine_similarity(image, text);
-			// printf("%.4f\t", sim);
+			printf("%.4f\t", sim);
 			confusion[i][j] = sim;
 			if (sim < min) min = sim;
 			if (sim > max) max = sim;
 		}
-		// printf("\n");
+		printf("\n");
 	}
 
+	//todo: hungarian algorithm to pair them up
 	for (int i = 0; i < NUM_DESCS; i++) {
 		for (int j = 0; j < NUM_DESCS; j++) {
 			float color = (confusion[i][j] - min) / (max - min);
@@ -143,22 +176,6 @@ int main() {
 
 	free(image_embeddings);
 	free(text_embeddings);
-
-	// float red_one_text[CLIP_TEXTUAL_OUTPUT_DIM];
-	// clip_encode_text("a pixelated red arrow pointing up on a black background", true, red_one_text, CLIP_TEXTUAL_OUTPUT_DIM, NULL);
-
-	// float red_five_text[CLIP_TEXTUAL_OUTPUT_DIM];
-	// clip_encode_text("a pixelated red arrow pointing left on a black background", true, red_five_text, CLIP_TEXTUAL_OUTPUT_DIM, NULL);
-
-	// float red_nine_text[CLIP_TEXTUAL_OUTPUT_DIM];
-	// clip_encode_text("a pixelated red arrow pointing right on a black background", true, red_nine_text, CLIP_TEXTUAL_OUTPUT_DIM, NULL);
-
-	// float red_nine_image[CLIP_TEXTUAL_OUTPUT_DIM];
-	// encode_image(red_nine_image, 2, 0);
-
-	// printf("up: %f\n", cosine_similarity(red_one_text, red_nine_image));
-	// printf("left: %f\n", cosine_similarity(red_five_text, red_nine_image));
-	// printf("right: %f\n", cosine_similarity(red_nine_text, red_nine_image));
 
 	return 0;
 }
