@@ -47,3 +47,4 @@ if (result != 0) {
 - [ ] better error handling in tokenizer
 - [ ] reduce number of mallocs (there's one in trie.c which might not need to be there)
 - [ ] experiment with statically linking the onnx runtime, instead of onnx-mlir. should improve performance, maybe without adding any runtime dependencies
+- [ ] run the tokenizer and the trie code through a fuzzer
